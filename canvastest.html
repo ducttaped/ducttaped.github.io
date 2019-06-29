@@ -17,9 +17,8 @@
           const k=32*Math.PI/h;
           const f=0.02/h;
           // Iterate through every pixel
-          for (let i=j=0; j < imageData.data.length; j+=4) {
+          for (let i=j=0; j < imageData.data.length; j+=4, i++) {
             // Modify pixel data
-            i++;
             x=i%w;
             y=(i-x)/w;
             r1=hypot(y-31*h/64,x-0.5*w);

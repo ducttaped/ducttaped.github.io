@@ -9,18 +9,22 @@
         const canvas = document.getElementById('tutorial');
         if (canvas.getContext) {
           const ctx = canvas.getContext('2d');
-          const w=512;
+          const w=1024;
           const h=512;
           const imageData = ctx.createImageData(w, h);
-          const m=Math;
-          const k=16*m.PI/w;
+          //const m=Math;
+          const {cos, sin, hypot, round} = Math;
+          const k=32*Math.PI/h;
+          const f=0.02/h;
           // Iterate through every pixel
           for (let i=j=0; j < imageData.data.length; j+=4) {
             // Modify pixel data
             i++;
             x=i%w;
             y=(i-x)/w;
-            imageData.data[j] = m.round(127+32*m.cos(k*m.hypot(x-15*w/32,y-0.5*h))+32*m.cos(k*m.hypot(x-17*w/32 ,y-0.5*h)));  // R
+            r1=hypot(y-31*h/64,x-0.5*w);
+            r2=hypot(y-33*h/64,x-0.5*w);
+            imageData.data[j] = round(127+64*cos(k*r1)/(1+f*r1**2)+64*cos(k*r2)/(1+f*r2**2));  // R
             imageData.data[j + 1] = imageData.data[j]>>2 // G
             imageData.data[j + 2] = imageData.data[j];  // B
             imageData.data[j + 3] = 255;  // A
@@ -35,6 +39,6 @@
     </style>
   </head>
   <body onload="draw();">
-    <canvas id="tutorial" width="600" height="600"></canvas>
+    <canvas id="tutorial" width="1112" height="600"></canvas>
   </body>
 </html>

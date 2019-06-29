@@ -54,8 +54,8 @@
         // Draw image data to the canvas
         ctx.putImageData(imageData, 22, 22,0,0,w,h);
         //Draw fps counter
-        fps.unshift(t);
-        if (fps.length==50) ctx.fillText((50000/(fps[0]-fps.pop())).toFixed(1),40,40);
+        fps.push(t);
+        if (fps.length==50) ctx.fillText((50000/(t-fps.shift())).toFixed(1),40,40);
         window.requestAnimationFrame(draw);
       }
     </script>

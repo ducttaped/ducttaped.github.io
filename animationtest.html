@@ -11,28 +11,51 @@
           ctx = canvas.getContext('2d');
           w=512;
           h=256;
+          wh4=4*w*h;
           imageData = ctx.createImageData(w, h);
           k=32*Math.PI/h;
           f=0.02/h;
+          ctx.fillStyle = 'white';
+          ctx.font = '16px monospace';
+          fps=[]; //initiate fps counter
           window.requestAnimationFrame(draw);
         }
       }
       function draw() {
         const {cos, sin, hypot, round} = Math;
-        const phi=Date.now()/200;
-        for (let i=j=0; j < imageData.data.length; j+=4, i++) {
-          // Modify pixel data
-          x=i%w;
-          y=(i-x)/w;
-          r1=hypot(y-24*h/64,x-w/2);
-          r2=hypot(y-40*h/64,x-w/2);
-          imageData.data[j] = round(127+64*cos(k*r1-phi)/(1+f*r1**2)+64*cos(k*r2-phi)/(1+f*r2**2));  // R
-          imageData.data[j + 1] = imageData.data[j]>>2 // G
-          imageData.data[j + 2] = imageData.data[j];  // B
-          imageData.data[j + 3] = 255;  // A
+        const t=Date.now();
+        const phi=t/200;
+        for (let y=0;y+y<h;y++) {
+          for (let x=0;x+x<w;x++) {
+            let j=y*w+x;
+            j<<=2;
+            let r1=hypot(y-24*h/64,x-w/2);
+            let r2=hypot(y-40*h/64,x-w/2);
+            let z=round(127+64*cos(k*r1-phi)/(1+f*r1*r1)+64*cos(k*r2-phi)/(1+f*r2*r2));
+            imageData.data[j] = z;  // R
+            imageData.data[j+1] = z>>2 // G
+            imageData.data[j+2] = z;  // B
+            j=wh4-j;
+            imageData.data[j] = z;  // R
+            imageData.data[j+1] = z>>2 // G
+            imageData.data[j+2] = z;  // B
+            j=(y*w)+w-x-1;
+            j<<=2;
+            imageData.data[j] = z;  // R
+            imageData.data[j+1] = z>>2 // G
+            imageData.data[j+2] = z;  // B
+            j=wh4-j;
+            imageData.data[j] = z;  // R
+            imageData.data[j+1] = z>>2 // G
+            imageData.data[j+2] = z;  // B
+          }
         }
+        for (let i=3; i < imageData.data.length; i+=4) imageData.data[i] = 255;  // A
         // Draw image data to the canvas
         ctx.putImageData(imageData, 22, 22,0,0,w,h);
+        //Draw fps counter
+        fps.unshift(t);
+        if (fps.length==50) ctx.fillText((50000/(fps[0]-fps.pop())).toFixed(1),40,40);
         window.requestAnimationFrame(draw);
       }
     </script>

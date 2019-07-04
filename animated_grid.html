@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<!--The template is from https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Basic_usage-->
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Duct-taped site. Now with paths.</title>
+    <script type="text/javascript">
+      //initiation
+      function init() {
+        //global definitions
+        const {min, random} = Math;
+        n=20;
+        cPsi=(2/3)**.5;
+        sPsi=(1/3)**.5;
+        const canvas = document.getElementById('tutorial');
+        if (canvas.getContext) {
+          ctx = canvas.getContext('2d');
+          
+          ctx.strokeStyle = 'white';
+          ctx.fillStyle = 'black';
+          fps=[];
+          v=[];
+          canvas.width=window.innerWidth-50;
+          canvas.height=window.innerHeight-50;
+          w=canvas.width;
+          h=canvas.height;
+          k=min(w,h)/((n+2)*2**.5);
+          for (let i=0;i<=n;i++) {
+            v[i]=[];
+            for (let j=0;j<=n;j++) {
+                let x=k*(j-n/2+.5*random()-0.25);
+                let y=k*(i-n/2+.5*random()-0.25);
+                let z=k*(random()-0.5);
+                v[i].push([x,y,z]);
+            }
+          }
+          window.requestAnimationFrame(draw);
+        }
+      }
+      //drawing each frame
+      function draw() {
+        const t=Date.now();
+        const phi=t/2000;
+        const {cos, sin, round} = Math;
+        const cPhi=cos(phi);
+        const sPhi=sin(phi);
+        var g=[];
+        for (let i=0;i<=n;i++) {
+            g[i]=[];
+            for (let j=0;j<=n;j++) {
+                let x=v[i][j][0];
+                let y=v[i][j][1];
+                let z=v[i][j][2];
+                let xt=x*cPhi+y*sPhi;
+                let yt=y*cPhi-x*sPhi;
+                let xg=w/2+xt;
+                let yg=h/2+yt*sPsi-z*cPsi;
+                g[i].push([round(xg),round(yg)]);
+            }
+        }
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.rect(0,0,w,h);
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.beginPath();
+        for (let i=0;i<=n;i++){
+            ctx.moveTo(g[i][0][0],g[i][0][1]);
+            for (let j=1;j<=n;j++) {
+                ctx.lineTo(g[i][j][0],g[i][j][1]);
+            }
+        }
+        for (let i=0;i<=n;i++){
+            ctx.moveTo(g[0][i][0],g[0][i][1]);
+            for (let j=1;j<=n;j++) {
+                ctx.lineTo(g[j][i][0],g[j][i][1]);
+            }
+        }
+        ctx.stroke();
+        //Draw fps counter
+        fps.push(t);
+        ctx.font = '24px monospace';
+        ctx.fillStyle = 'white';
+        if (fps.length==50) ctx.fillText((50000/(t-fps.shift())).toFixed(1),40,40);
+        window.requestAnimationFrame(draw);
+      }
+    </script>
+    <style type="text/css">
+        canvas { border: 1px solid black; }
+    </style>
+  </head>
+  <body onload="init();">
+    <canvas id="tutorial"></canvas>
+  </body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!--The template is from https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Basic_usage-->
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Duct-taped site. Animation demo.</title>
+    <script type="text/javascript">
+      function init() {
+        const canvas = document.getElementById('tutorial');
+        if (canvas.getContext) {
+          ctx = canvas.getContext('2d');
+          w=canvas.width-44;
+          h=canvas.height-44;
+          wh4=4*w*h-4;
+          imageData = ctx.createImageData(w, h);
+          k=32*Math.PI/h;
+          f=0.02/h;
+          ctx.fillStyle = 'white';
+          ctx.font = '16px monospace';
+          fps=[]; //initiate fps counter
+          window.requestAnimationFrame(draw);
+        }
+      }
+      function draw() {
+        const {cos, sin, hypot, round} = Math;
+        const t=Date.now();
+        const phi=t/200;
+        for (let y=0;y+y<=h;y++) {
+          for (let x=0;x+x<=w;x++) {
+            let j=y*w+x;
+            j<<=2;
+            let r1=hypot(y-24*h/64,x-w/2);
+            let r2=hypot(y-40*h/64,x-w/2);
+            let z=round(127+64*cos(k*r1-phi)/(1+f*r1*r1)+64*cos(k*r2-phi)/(1+f*r2*r2));
+            imageData.data[j] = z;  // R
+            imageData.data[j+1] = z>>2 // G
+            imageData.data[j+2] = z;  // B
+            j=wh4-j;
+            imageData.data[j] = z;  // R
+            imageData.data[j+1] = z>>2 // G
+            imageData.data[j+2] = z;  // B
+            j=(y*w)+w-x-1;
+            j<<=2;
+            imageData.data[j] = z;  // R
+            imageData.data[j+1] = z>>2 // G
+            imageData.data[j+2] = z;  // B
+            j=wh4-j;
+            imageData.data[j] = z;  // R
+            imageData.data[j+1] = z>>2 // G
+            imageData.data[j+2] = z;  // B
+          }
+        }
+        for (let i=3; i < imageData.data.length; i+=4) imageData.data[i] = 255;  // A
+        // Draw image data to the canvas
+        ctx.putImageData(imageData, 22, 22,0,0,w,h);
+        //Draw fps counter
+        fps.push(t);
+        if (fps.length==50) ctx.fillText((50000/(t-fps.shift())).toFixed(1),40,40);
+        window.requestAnimationFrame(draw);
+      }
+    </script>
+    <style type="text/css">
+        canvas { border: 1px solid black; }
+    </style>
+  </head>
+  <body onload="init();">
+    <canvas id="tutorial" style="margin: 10px;" width="600" height="300"></canvas>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--The template is from https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Basic_usage-->
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Duct-taped site. Canvas demo.</title>
+    <script type="text/javascript">
+      function draw() {
+        const canvas = document.getElementById('tutorial');
+        if (canvas.getContext) {
+          const ctx = canvas.getContext('2d');
+          const w=1024;
+          const h=512;
+          const imageData = ctx.createImageData(w, h);
+          //const m=Math;
+          const {cos, sin, hypot, round} = Math;
+          const k=32*Math.PI/h;
+          const f=0.02/h;
+          // Iterate through every pixel
+          for (let i=j=0; j < imageData.data.length; j+=4, i++) {
+            // Modify pixel data
+            x=i%w;
+            y=(i-x)/w;
+            r1=hypot(y-31*h/64,x-0.5*w);
+            r2=hypot(y-33*h/64,x-0.5*w);
+            imageData.data[j] = round(127+64*cos(k*r1)/(1+f*r1**2)+64*cos(k*r2)/(1+f*r2**2));  // R
+            imageData.data[j + 1] = imageData.data[j]>>2 // G
+            imageData.data[j + 2] = imageData.data[j];  // B
+            imageData.data[j + 3] = 255;  // A
+          }
+          // Draw image data to the canvas
+          ctx.putImageData(imageData, 44, 44);
+        }
+      }
+    </script>
+    <style type="text/css">
+        canvas { border: 1px solid black; }
+    </style>
+  </head>
+  <body onload="draw();">
+    <canvas id="tutorial" width="1112" height="600"></canvas>
+  </body>
+</html>

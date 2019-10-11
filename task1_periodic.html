@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Task 1. Periodic.</title>
+    <style type="text/css">
+        canvas { border: 1px solid black; }
+    </style>
+    <script type="text/javascript">
+        var lstarted=false;
+        var nstarted=false;
+        var lctx, nctx;
+        var w=1000;
+        var h=400;
+        var dh=75;
+        var dw=50;
+        var tscale=25, t=0, tl, tn;
+        var la,ldx,ldt,lxmax,ltmax,lq,ldraw=[true,true,true];
+        var ndx,ndt,nxmax,ntmax,nq,ndraw=[false,true,true];
+        var larr=[[],[],[]];
+        var narr=[[],[],[]];
+
+        function lClick() {
+            if(lstarted) {
+                document.getElementById("lstart").innerHTML="Start";
+            } else {
+                linit();
+                document.getElementById("lstart").innerHTML="Stop";
+            }
+            lstarted=!lstarted;
+            for (let i=1;i<9;i++) {
+                document.getElementById("linp"+i).disabled=lstarted;
+            }
+        }
+        function nClick() {
+            if(nstarted) {
+                document.getElementById("nstart").innerHTML="Start";
+            } else {
+                ninit();
+                document.getElementById("nstart").innerHTML="Stop";
+            }
+            nstarted=!nstarted;
+            for (let i=2;i<9;i++) {
+                document.getElementById("ninp"+i).disabled=nstarted;
+            }
+        }
+        window.onload=function init() {
+            const lcanvas = document.getElementById('lplot');
+            const ncanvas = document.getElementById('nplot');
+            if (lcanvas.getContext) {
+                lctx = lcanvas.getContext('2d');
+                lctx.fillStyle="white";
+            }
+            if (ncanvas.getContext) {
+                nctx = ncanvas.getContext('2d');
+                nctx.fillStyle="white";
+            }
+            linit();
+            window.requestAnimationFrame(draw);
+        }
+        function lswap(i) {
+            ldraw[i]=!ldraw[i];
+        }
+        function nswap(i) {
+            ndraw[i]=!ndraw[i];
+        }
+        function linit() {
+
+            la=document.getElementById('linp1').value;
+            ldx=document.getElementById('linp2').value;
+            ldt=document.getElementById('linp3').value;
+            lxmax=+document.getElementById('linp4').value;
+            ltmax=document.getElementById('linp5').value;
+            lq=document.getElementById('linp6').value;
+            tl=0;
+            for (let i=0;i<3;i++){
+                for (let j=0;j<=lxmax;j++){
+                    larr[i][j]=Math.cos(2*Math.PI*j/(lxmax+1));
+                }
+            }
+        }
+        function ninit() {
+            ndx=document.getElementById('ninp2').value;
+            ndt=document.getElementById('ninp3').value;
+            nxmax=+document.getElementById('ninp4').value;
+            ntmax=document.getElementById('ninp5').value;
+            nq=document.getElementById('ninp6').value;
+            tn=0;
+            for (let i=0;i<3;i++){
+                for (let j=0;j<=nxmax;j++){
+                    narr[i][j]=(1+Math.cos(2*Math.PI*j/(nxmax+1)))/2;
+                }
+            }
+        }
+        function draw() {
+            var newt=Date.now();
+            if (t=0 || newt-t>tscale) {
+                tick();
+                if (lstarted){
+                    console.log('drawing?', lxmax);
+                    lctx.beginPath();
+                    lctx.rect(0,0,w,h);
+                    lctx.fill();
+                    if (ldraw[1]) {
+                        console.log('drawing1');
+                        lctx.strokeStyle = 'blue';
+                        lctx.beginPath();
+                        lctx.moveTo(dw,h/2-(h/2-dh)*larr[1][0]);
+                        for (let i=1;i<=lxmax;i++) {
+                            lctx.lineTo(dw+(w-2*dw)*i/lxmax,h/2-(h/2-dh)*larr[1][i]);
+                        }
+                        lctx.stroke();
+                    }
+                    if (ldraw[2]) {
+                        console.log('drawing2');
+                        lctx.strokeStyle = 'green';
+                        lctx.beginPath();
+                        lctx.moveTo(dw,h/2-(h/2-dh)*larr[2][0]);
+                        for (let i=1;i<=lxmax;i++) {
+                            lctx.lineTo(dw+(w-2*dw)*i/lxmax,h/2-(h/2-dh)*larr[2][i]);
+                        }
+                        lctx.stroke();
+                    }
+                }
+                if (nstarted){
+                    //console.log('drawing?', lxmax);
+                    nctx.beginPath();
+                    nctx.rect(0,0,w,h);
+                    nctx.fill();
+                    if (ndraw[1]) {
+                        nctx.strokeStyle = 'blue';
+                        nctx.beginPath();
+                        lctx.moveTo(dw,h-dh-(h-2*dh)*narr[1][0]);
+                        for (let i=1;i<=nxmax;i++) {
+                            nctx.lineTo(dw+(w-2*dw)*i/nxmax,h-dh-(h-2*dh)*narr[1][i]);
+                        }
+                        nctx.stroke();
+                    }
+                    if (ndraw[2]) {
+                        nctx.strokeStyle = 'green';
+                        nctx.beginPath();
+                        lctx.moveTo(dw,h-dh-(h-2*dh)*narr[1][0]);
+                        for (let i=1;i<=nxmax;i++) {
+                            nctx.lineTo(dw+(w-2*dw)*i/nxmax,h-dh-(h-2*dh)*narr[2][i]);
+                        }
+                        nctx.stroke();
+                    }
+                }
+                t=newt;
+            }
+            window.requestAnimationFrame(draw);
+        }
+        function tick() {
+            var tarr=[];
+            var ttarr=[];
+            var tttarr=[];
+            const c=la*ldt/ldx;
+            const nc=ndt/ndx;
+            if (lstarted) {
+                //tl++;
+                //if (tl>ltmax) linit();
+                if (ldraw[1]) {
+                    for (let i=1;i<=lxmax;i++){
+                        tarr[i]=larr[1][i]-c*(larr[1][i]-larr[1][i-1]);
+                    }
+                    tarr[0]=larr[1][0]-c*(larr[1][0]-larr[1][lxmax]);
+                    for (let i=0;i<=lxmax;i++) larr[1][i]=tarr[i];
+                }
+                if (ldraw[2]) {
+                    for (let i=1;i<=lxmax;i++){
+                        tarr[i]=larr[2][i]-c*(larr[2][i]-larr[2][i-1]);
+                    }
+                    tarr[0]=larr[2][0]-c*(larr[2][0]-larr[2][lxmax]);
+                    for (let i=0;i<lxmax;i++){
+                        ttarr[i]=(larr[2][i]+tarr[i]-c*(tarr[i+1]-tarr[i]))/2;
+                    }
+                    ttarr[lxmax]=ttarr[lxmax]=(larr[2][lxmax]+tarr[lxmax]-c*(tarr[0]-tarr[lxmax]))/2;
+                    for (let i=0;i<=lxmax;i++){
+                        let dmm=ttarr[(i-1+lxmax+1)%(lxmax+1)]-ttarr[(i-2+lxmax+1)%(lxmax+1)];
+                        let dm=ttarr[i]-ttarr[(i-1+lxmax+1)%(lxmax+1)];
+                        let dp=ttarr[(i+1+lxmax+1)%(lxmax+1)]-ttarr[i];
+                        let dpp=ttarr[(i+2+lxmax+1)%(lxmax+1)]-ttarr[(i+1+lxmax+1)%(lxmax+1)];
+                        let qp=(dp*dpp<0)||(dp*dm<0)?dp:0;
+                        let qm=(dm*dmm<0)||(dp*dm<0)?dm:0;
+                        larr[2][i]=ttarr[i]+lq*(qp-qm);
+                    }
+                }
+                
+            }
+            if (nstarted) {
+                //tn++;
+                //if (tn>ntmax) ninit();
+                if (ndraw[1]) {
+                    for (let i=1;i<=nxmax;i++){
+                        let f=narr[1][i]*narr[1][i]/2;
+                        let fm=narr[1][i-1]*narr[1][i-1]/2;
+                        tarr[i]=narr[1][i]-nc*(f-fm);
+                    }
+                    tarr[0]=narr[1][0]-nc*(narr[1][0]*narr[1][0]-narr[1][nxmax-1]*narr[1][nxmax-1])/2;
+                    for (let i=0;i<=lxmax;i++) narr[1][i]=tarr[i];
+                }
+                if (ndraw[2]) {
+                    for (let i=1;i<=nxmax;i++){
+                        let f=narr[2][i]*narr[2][i]/2;
+                        let fm=narr[2][i-1]*narr[2][i-1]/2;
+                        tarr[i]=narr[2][i]-nc*(f-fm);
+                    }
+                    tarr[0]=narr[2][0]-nc*(narr[2][0]*narr[2][0]-narr[1][nxmax-1]*narr[2][nxmax-1])/2;
+                    for (let i=0;i<nxmax;i++){
+                        var fw=tarr[i]*tarr[i]/2;
+                        var fwp=tarr[i+1]*tarr[i+1]/2;
+                        ttarr[i]=(narr[2][i]+tarr[i]-nc*(fwp-fw))/2;
+                    }
+                    fw=fwp;
+                    fwp=(tarr[0]**2)/2;
+                    ttarr[nxmax]=(narr[2][nxmax]+tarr[nxmax]-nc*(fwp-fw))/2;
+                    for (let i=0;i<=nxmax;i++){
+                        let dmm=ttarr[(i-1+nxmax+1)%(nxmax+1)]-ttarr[(i-2+nxmax+1)%(nxmax+1)];
+                        let dm=ttarr[i]-ttarr[(i-1+nxmax+1)%(nxmax+1)];
+                        let dp=ttarr[(i+1+nxmax+1)%(nxmax+1)]-ttarr[i];
+                        let dpp=ttarr[(i+2+nxmax+1)%(nxmax+1)]-ttarr[(i+1+nxmax+1)%(nxmax+1)];
+                        let qp=(dp*dpp<0)||(dp*dm<0)?dp:0;
+                        let qm=(dm*dmm<0)||(dp*dm<0)?dm:0;
+                        narr[2][i]=ttarr[i]+nq*(qp-qm);
+                    }
+                }
+            }
+        }
+        </script>
+        
+  </head>
+  <body>
+    <table>
+        <tr>
+            <td>
+                <img src="linear_24.png"><br>
+                a:<br>
+                <input id="linp1" type="text" value="1.0"><br>
+                dx:<br>
+                <input id="linp2" type="text" value="0.04"><br>
+                dt:<br>
+                <input id="linp3" type="text" value="0.01"><br>
+                x<sub>max_count</sub>:<br>
+                <input id="linp4" type="text" value="250"><br>
+                t<sub>max_count</sub>:<br>
+                <input id="linp5" type="text" value="1000"><br>
+                q:<br>
+                <input id="linp6" type="text" value="0.2"><br>
+                <input id="linp7" type="checkbox" checked onchange="lswap(1)"> Схема 1го порядка<br>
+                <input id="linp8" type="checkbox" checked onchange="lswap(2)"> Схема 2го порядка<br>
+                <button id="lstart" onclick="lClick()">Start</button>
+            </td>
+            <td>
+                <canvas id="lplot" width=1000 height=400></canvas>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="nonlinear_24.png"><br>
+                dx:<br>
+                <input id="ninp2" type="text" value="0.04"><br>
+                dt:<br>
+                <input id="ninp3" type="text" value="0.01"><br>
+                x<sub>max_count</sub>:<br>
+                <input id="ninp4" type="text" value="100"><br>
+                t<sub>max_count</sub>:<br>
+                <input id="ninp5" type="text" value="800"><br>
+                q:<br>
+                <input id="ninp6" type="text" value="0.2"><br>
+                <input id="ninp7" type="checkbox" checked onchange="nswap(1)"> Схема 1го порядка<br>
+                <input id="ninp8" type="checkbox" checked onchange="nswap(2)"> Схема 2го порядка<br>
+                <button id="nstart" onclick="nClick()">Start</button>
+            </td>
+            <td>
+                <canvas id="nplot" width=1000 height=400></canvas>
+            </td>
+        </tr>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Duct-taped site. Shuffling.</title>
+</head>
+<body>
+    <p id="demo">placeholder</p>
+    <script>
+        var x = document.getElementById("demo");
+
+        function encrypt_step(s) {
+          var l=s.length;
+          var hl=Math.floor(l/2);
+          var r='';
+          for (let i=0;i<hl;i++) {
+            r=r+s[i*2+1];
+          }
+          for (let i=hl;i<l;i++) {
+            r=r+s[(i-hl)*2];
+          }
+          return r;
+        }
+
+        function decrypt_step(s) {
+          var l=s.length;
+          var hl=Math.floor(l/2);
+          var r='';
+          for (let i=0;i<l;i++) {
+            r+=i%2?s[(i-1)/2]:s[hl+i/2];
+          }
+          return r;
+        }
+        
+        var q='Hello, world!'
+        var p=q
+        for (let i=0;i<12;i++) {
+            q=encrypt_step(q);
+            p+='<br>'+q;
+        }
+        x.innerHTML = p;
+    </script>
+</body>
+</html>

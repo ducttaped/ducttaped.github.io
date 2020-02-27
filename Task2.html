@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Task 2</title>
+    <style type="text/css">
+        canvas { border: 1px solid black; }
+    </style>
+    <script type="text/javascript">
+        var lstarted=false;
+        var nstarted=false;
+        var lctx, nctx;
+        var w=1000;
+        var h=400;
+        var dh=75;
+        var dw=50;
+        var tscale=10, t=0, tl, tn;
+        var lk,ldx,ldt,lxmax,ltmax,llambda,ldraw=[true,true,true];
+        var nk,nc,ndx,ndt,nxmax,ntmax,nlambda0,nsigma,ndraw=[true,true,true];
+        var scolors=['red','blue','green']
+        var larr=[[],[],[]];
+        var narr=[[],[],[]];
+        const epsilon = 0.001;
+        const q=0.5;
+        var nepsilon;
+
+        function lClick() {
+            if(lstarted) {
+                document.getElementById("lstart").innerHTML="Start";
+            } else {
+                linit();
+                document.getElementById("lstart").innerHTML="Stop";
+            }
+            lstarted=!lstarted;
+            for (let i=1;i<9;i++) {
+                document.getElementById("linp"+i).disabled=lstarted;
+            }
+        }
+        function nClick() {
+            if(nstarted) {
+                document.getElementById("nstart").innerHTML="Start";
+            } else {
+                ninit();
+                document.getElementById("nstart").innerHTML="Stop";
+            }
+            nstarted=!nstarted;
+            for (let i=1;i<10;i++) {
+                document.getElementById("ninp"+i).disabled=nstarted;
+            }
+        }
+        window.onload=function init() {
+            const lcanvas = document.getElementById('lplot');
+            const ncanvas = document.getElementById('nplot');
+            if (lcanvas.getContext) {
+                lctx = lcanvas.getContext('2d');
+                lctx.fillStyle="white";
+            }
+            if (ncanvas.getContext) {
+                nctx = ncanvas.getContext('2d');
+                nctx.fillStyle="white";
+            }
+            linit();
+            window.requestAnimationFrame(draw);
+        }
+        function linit() {
+            ldx=+document.getElementById('linp1').value;
+            ldt=+document.getElementById('linp2').value;
+            lxmax=+document.getElementById('linp3').value;
+            ltmax=+document.getElementById('linp4').value;
+            llambda=+document.getElementById('linp5').value;
+            lk=llambda*ldt/(ldx*ldx);
+            console.log('lk: '+lk);
+            for (let i=6;i<9;i++) {
+                ldraw[i-6]=document.getElementById("linp"+i).checked
+            }
+            //console.log(ldraw);
+            tl=0;
+            larr[1][0]=1.0;
+            for (let i=1;i<=lxmax;i++) {
+                larr[1][i]=0.0;
+            }
+        }
+        function ninit() {
+            ndx=document.getElementById('ninp1').value;
+            ndt=document.getElementById('ninp2').value;
+            nxmax=+document.getElementById('ninp3').value;
+            ntmax=document.getElementById('ninp4').value;
+            nlambda0=+document.getElementById('ninp5').value;
+            nsigma=+document.getElementById('ninp6').value;
+            nc=Math.sqrt(nlambda0/nsigma);
+            console.log('nc: '+nc);
+            nk=1/nc;
+            nepsilon=nlambda0*epsilon;
+            for (let i=7;i<10;i++) {
+                ndraw[i-7]=document.getElementById("ninp"+i).checked
+            }
+            //console.log(ndraw);
+            tn=0;
+            for (let i=0;i<=nxmax;i++) narr[1][i]=0;
+        }
+        function draw() {
+            var newt=Date.now();
+            if (t=0 || newt-t>tscale) {
+                tick();
+                if (lstarted){
+                    lctx.beginPath();
+                    lctx.rect(0,0,w,h);
+                    lctx.fill();
+                    for (let j=0;j<3;j++) {
+                        if (ldraw[j]) {
+                            lctx.strokeStyle = scolors[j];
+                            lctx.beginPath();
+                            lctx.moveTo(dw,h/2-(h/2-dh)*larr[j][0]);
+                            for (let i=1;i<=lxmax;i++) {
+                                lctx.lineTo(dw+(w-2*dw)*i/lxmax,h-dh-(h-2*dh)*larr[j][i]);
+                            }
+                            lctx.stroke();
+                        }
+                    }                    
+                }
+                if (nstarted){
+                    nctx.beginPath();
+                    nctx.rect(0,0,w,h);
+                    nctx.fill();
+                    for (let j=0;j<3;j++) {
+                        if (ndraw[j]) {
+                            nctx.strokeStyle = scolors[j];
+                            nctx.beginPath();
+                            nctx.moveTo(dw,h/2-(h/2-dh)*narr[j][0]);
+                            for (let i=1;i<=nxmax;i++) {
+                                nctx.lineTo(dw+(w-2*dw)*i/nxmax,h-dh-(h-2*dh)*narr[j][i]);
+                            }
+                            nctx.stroke();
+                        }
+                    }
+                }
+                t=newt;
+            }
+            window.requestAnimationFrame(draw);
+        }
+        function tick() {
+            var tarr=[];
+            var ttarr=[];
+            var tttarr=[];
+            if (lstarted) {
+                tl++;
+                if (tl>ltmax) linit();
+                if (ldraw[1]) {
+                    for (let i=1;i<lxmax;i++){
+                        tarr[i]=larr[1][i]+lk*(1.0*larr[1][i-1]+1.0*larr[1][i+1]-2.0*larr[1][i]);
+                    }
+                    for (let i=1;i<lxmax;i++){
+                        larr[1][i]=tarr[i];
+                    }
+                }                
+            }
+            if (nstarted) {
+                tn++;
+                if (tn>ntmax) ninit();
+                if (ndraw[0]) {
+                    for (let i=0;i<=nxmax;i++){
+                        let ctx=nc*ndt*tn-ndx*i;
+                        if(ctx<0) {
+                            narr[0][i]=0;
+                        } else {
+                            narr[0][i]=Math.pow((nk*ctx),1/nsigma);
+                        }
+                    }
+                }
+                if (ndraw[1]) {
+                    /*let nlambda=[];
+                    //console.log (nxmax, narr[1].length);
+                    for (let i=0;i<=nxmax;i++){
+                        nlambda[i]=nlambda0*Math.pow(narr[1][i],nsigma);
+                    }*/
+                    narr[1][0]=Math.pow(tn*ndt,1/nsigma);
+                    let nlambda=narr[1].map((v)=>nlambda0*Math.pow(v,nsigma)); 
+                    for (let i=0;i<nxmax;i++){
+                        tttarr[i]=narr[1][i+1]-narr[1][i];
+                        let npro=nlambda[i]*nlambda[i+1];
+                        let nsum=nlambda[i]+nlambda[i+1];
+                        if (npro==0) {
+                            tarr[i]=nsum/2;
+                        } else {
+                            tarr[i]=2*npro/nsum;
+                        }
+                    }
+                    
+                    let nkk=-ndt/(ndx*ndx);
+                    /*for (let i=1;i<nxmax;i++) {
+                        let nder2=tarr[i]*tttarr[i]-tarr[i-1]*tttarr[i-1];
+                        if (nder2<0) nder2=0;
+                        narr[1][i]-=nkk*nder2;
+                    }*/
+                    //leningrad
+                    for (let i=1;i<nxmax;i++) {
+                        ttarr[i]=narr[1][i]-nkk*(tarr[i]*tttarr[i]-tarr[i-1]*tttarr[i-1]);
+                    }
+                    var dp,dpp,dm,dmm,qp,qm;
+                    for (let i=1;i<nxmax;i++) {
+                        dm=ttarr[i]-ttarr[i-1];
+                        dp=ttarr[i+1]-ttarr[i];
+                        dmm=(i>1)?ttarr[i-1]-ttarr[i-2]:dm;
+                        dpp=(i<nxmax-1)?ttarr[i+2]-ttarr[i+1]:dp;
+                        if ((dm*dmm<0)||(dm*dp<0)) qm=dm; else qm=0;
+                        if ((dp*dpp<0)||(dm*dp<0)) qp=dp; else qp=0;
+                        narr[1][i]=ttarr[i]+q*(qp-qm); 
+                    }
+                    //my
+                    /*for (let i=1;i<nxmax;i++) {
+                        let nsum=ttarr[i-1]+ttarr[i+1];
+                        if (2*ttarr[i]>nsum) {
+                            narr[1][i]=nsum/2;
+                        } else {
+                            narr[1][i]=ttarr[i];
+                        }
+                    }*/                   
+                }
+            }
+        }
+        function lenin(arrin){
+
+        }
+        </script>
+        
+  </head>
+  <body>
+    <table>
+        <tbody><tr>
+            <td>
+                <img src="l80.gif"><br>
+                dx:<br>
+                <input id="linp1" type="text" value="1.0"><br>
+                dt:<br>
+                <input id="linp2" type="text" value="0.5"><br>
+                x<sub>max_count</sub>:<br>
+                <input id="linp3" type="text" value="50"><br>
+                t<sub>max_count</sub>:<br>
+                <input id="linp4" type="text" value="1000"><br>
+                λ:<br>
+                <input id="linp5" type="text" value="1.0"><br>
+                <input id="linp6" type="checkbox" checked="checked"> Точное решение<br>
+                <input id="linp7" type="checkbox" checked="checked"> Явная схема<br>
+                <input id="linp8" type="checkbox" checked="checked"> Неявная схема<br>
+                <button id="lstart" onclick="lClick()">Start</button>
+            </td>
+            <td>
+                <canvas id="lplot" width="1000" height="400"></canvas>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="nl80.gif"><br>
+                dx:<br>
+                <input id="ninp1" type="text" value="0.1"><br>
+                dt:<br>
+                <input id="ninp2" type="text" value="0.01"><br>
+                x<sub>max_count</sub>:<br>
+                <input id="ninp3" type="text" value="200"><br>
+                t<sub>max_count</sub>:<br>
+                <input id="ninp4" type="text" value="1000"><br>
+                λ<sub>0</sub>:<br>
+                <input id="ninp5" type="text" value="1.0"><br>
+                σ:<br>
+                <input id="ninp6" type="text" value="0.5"><br>
+                <input id="ninp7" type="checkbox" checked="checked"> Точное решение<br>
+                <input id="ninp8" type="checkbox" checked="checked"> Явная схема<br>
+                <input id="ninp9" type="checkbox" checked="checked"> Неявная схема<br>
+                <button id="nstart" onclick="nClick()">Start</button>
+            </td>
+            <td>
+                <canvas id="nplot" width="1000" height="400"></canvas>
+            </td>
+        </tr>
+    </tbody></table>
+  
+</body></html>

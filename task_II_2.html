@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Task 2</title>
+    <style type="text/css">
+      canvas { border: 1px solid black; }
+      /* The slider itself */
+      .slider {
+        -webkit-appearance: none;  /* Override default CSS styles */
+        appearance: none;
+        width: 100%; /* Full-width */
+        height: 25px; /* Specified height */
+        background: #d3d3d3; /* Grey background */
+        outline: none; /* Remove outline */
+        opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+        -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+        transition: opacity .2s;
+      }
+
+      /* Mouse-over effects */
+      .slider:hover {
+        opacity: 1; /* Fully shown on mouse-over */
+      }
+
+      /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none; /* Override default look */
+        appearance: none;
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        background: #4CAF50; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+      }
+
+      .slider::-moz-range-thumb {
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        background: #4CAF50; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+      }
+    </style>
+    <script type="text/javascript">
+        function recalcAB() {
+          var ABR=document.getElementById('inpAB').value;
+          document.getElementById('inpB').value=ABR/20.0;
+          document.getElementById('inpA').value=(20-ABR)/20.0;
+        }
+        function validateM() {
+          const N=document.getElementById('inpN').value; //N
+          var mMin=Math.round(document.getElementById("inpMmin").value); //Minimum m for spectrogram
+          var mMax=Math.round(document.getElementById("inpMmax").value); //Maximum m for spectrogram
+          if (2*mMin<-N) mMin=-N/2;
+          if (2*(mMax+1)>N) mMax=N/2-1;
+          document.getElementById("inpMmin").value=mMin;
+          document.getElementById("inpMmax").value=mMax;
+        }
+        function fDraw() {
+          //calculations init
+          const pi2=Math.PI*2;
+          const T=document.getElementById('inpT').value; //T
+          const N=document.getElementById('inpN').value; //N
+          const A=document.getElementById('inpA').value; //A
+          const B=document.getElementById('inpB').value; //B
+          const MASg=document.getElementById("inpMASg").value; //Maximum displayed amplitude of signal
+          const MASp=document.getElementById("inpMASp").value; //Maximum displayed amplitude of spectrogram
+          const mMin=document.getElementById("inpMmin").value; //Minimum m for spectrogram
+          const mMax=document.getElementById("inpMmax").value; //Maximum m for spectrogram
+          var ua=new Array(N);
+          var u=new Array(N);
+          var Inu=new Array(N);
+          //graphics init
+          const canvasSg = document.getElementById('plotSg');
+          const canvasSp = document.getElementById('plotSp');
+          const ctxSg = canvasSg.getContext('2d');
+          const ctxSp = canvasSp.getContext('2d');
+          const w = canvasSg.width;
+          const h = canvasSp.height;
+          ctxSg.fillStyle="white";
+          ctxSp.fillStyle="white";
+          ctxSg.beginPath();
+          ctxSg.rect(0,0,w,h);
+          ctxSg.fill();
+          ctxSp.beginPath();
+          ctxSp.rect(0,0,w,h);
+          ctxSp.fill();
+          //calculating signal
+          for (let i=0;i<N;i++) {
+            ua[i]=A*Math.sin(pi2*i*T/N)
+            u[i]=ua[i]+B*Math.sqrt(-2*Math.log(Math.random()))*Math.cos(pi2*Math.random());
+          }
+          //drawing signal
+          ctxSg.strokeStyle = 'blue';
+          ctxSg.beginPath();
+          ctxSg.moveTo(0,h/2-u[0]*h/(2*MASg));
+          for (let i=1;i<N;i++) {
+            ctxSg.lineTo(w*i/(N-1),h/2-u[i]*h/(2*MASg));
+          }
+          ctxSg.stroke();
+          ctxSg.strokeStyle = 'red';
+          ctxSg.beginPath();
+          ctxSg.moveTo(0,h/2-ua[0]*h/(2*MASg));
+          for (let i=1;i<N;i++) {
+            ctxSg.lineTo(w*i/(N-1),h/2-ua[i]*h/(2*MASg));
+          }
+          ctxSg.stroke();
+          //calculating spectrogram
+          for (let i=mMin;i<=mMax;i++) {
+            let URe=0;
+            let UIm=0;
+            let omega=pi2*i*T/N;
+            for (j=0;j<N;j++) {
+              phi=omega*j;
+              URe+=u[j]*Math.cos(phi);
+              UIm+=u[j]*Math.sin(phi);
+            }
+            Inu[i]=(URe*URe+UIm*UIm)/N;
+          }
+          //drawing spectrogram
+          ctxSp.strokeStyle = 'blue';
+          ctxSp.beginPath();
+          ctxSp.moveTo(0,h-Inu[mMin]*h/MASp);
+          for (let i=mMin;i<=mMax;i++) {
+            ctxSp.lineTo(w*(i-mMin)/(mMax-mMin),h-Inu[i]*h/MASp);
+          }
+          ctxSp.stroke();
+        }
+    </script>
+        
+  </head>
+  <body>
+    <table>
+        <!--Signal parameters-->
+        <tr>
+            <td>
+                T:<br>
+                <input id="inpT" type="text" value="15.0"><br>
+                N:<br>
+                <input id="inpN" type="text" value="1024" onchange="validateM()"><br>
+                Signal ⟷ Noise:<br>
+                <input type="range" min="0" max="20" value="15" class="slider" id="inpAB" oninput="recalcAB()"><br>
+                Signal:<br>
+                <input id="inpA" type="text" value="0.25" disabled="true"><br>
+                Noise:<br>
+                <input id="inpB" type="text" value="0.75" disabled="true"><br>
+                Max amplitude:<br>
+                <input id="inpMASg" type="text" value="4.0"><br>
+            </td>
+            <td>
+                <canvas id="plotSg" width=1000 height=400></canvas>
+            </td>
+        </tr>
+        <!--Spectrogram parameters-->
+        <tr>
+            <td>
+                Max amplitude:<br>
+                <input id="inpMASp" type="text" value="32"><br>
+                m<sub>min</sub>:<br>
+                <input id="inpMmin" type="text" value="-512" onchange="validateM()"><br>
+                m<sub>max</sub>:<br>
+                <input id="inpMmax" type="text" value="511" onchange="validateM()"><br>
+                <br>
+                <button id="inpDraw" onclick="fDraw()">Draw</button>
+            </td>
+            <td>
+                <canvas id="plotSp" width=1000 height=400></canvas>
+            </td>
+        </tr>
+    </table>
+  </body>
+</html>

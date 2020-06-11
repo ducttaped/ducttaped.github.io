@@ -12,6 +12,9 @@
             var t=8*x-4;
             return Math.exp(-t*t*t*t)
         }
+        function g(x) {
+            return (1-Math.cos(2*Math.PI*x))/2;
+        }
         function btnprs () {
         //generating F
             const N=document.getElementById('inpN').value; //N
@@ -157,92 +160,160 @@
             }
             ctx.stroke();
         }
-/*
-        function recalcAB() {
-          var ABR=document.getElementById('inpAB').value;
-          document.getElementById('inpB').value=ABR/20.0;
-          document.getElementById('inpA').value=(20-ABR)/20.0;
-        }
-        function validateM() {
-          const N=document.getElementById('inpN').value; //N
-          var mMin=Math.round(document.getElementById("inpMmin").value); //Minimum m for spectrogram
-          var mMax=Math.round(document.getElementById("inpMmax").value); //Maximum m for spectrogram
-          if (2*mMin<-N) mMin=-N/2;
-          if (2*(mMax+1)>N) mMax=N/2-1;
-          document.getElementById("inpMmin").value=mMin;
-          document.getElementById("inpMmax").value=mMax;
-        }
-        function fDraw() {
-          //calculations init
-          const pi2=Math.PI*2;
-          const T=document.getElementById('inpT').value; //T
-          const N=document.getElementById('inpN').value; //N
-          const A=document.getElementById('inpA').value; //A
-          const B=document.getElementById('inpB').value; //B
-          const MASg=document.getElementById("inpMASg").value; //Maximum displayed amplitude of signal
-          const MASp=document.getElementById("inpMASp").value; //Maximum displayed amplitude of spectrogram
-          const mMin=document.getElementById("inpMmin").value; //Minimum m for spectrogram
-          const mMax=document.getElementById("inpMmax").value; //Maximum m for spectrogram
-          var ua=new Array(N);
-          var u=new Array(N);
-          var Inu=new Array(N);
-          //graphics init
-          const canvasSg = document.getElementById('plotSg');
-          const canvasSp = document.getElementById('plotSp');
-          const ctxSg = canvasSg.getContext('2d');
-          const ctxSp = canvasSp.getContext('2d');
-          const w = canvasSg.width;
-          const h = canvasSp.height;
-          ctxSg.fillStyle="white";
-          ctxSp.fillStyle="white";
-          ctxSg.beginPath();
-          ctxSg.rect(0,0,w,h);
-          ctxSg.fill();
-          ctxSp.beginPath();
-          ctxSp.rect(0,0,w,h);
-          ctxSp.fill();
-          //calculating signal
-          for (let i=0;i<N;i++) {
-            ua[i]=A*Math.sin(pi2*i*T/N)
-            u[i]=ua[i]+B*Math.sqrt(-2*Math.log(Math.random()))*Math.cos(pi2*Math.random());
-          }
-          //drawing signal
-          ctxSg.strokeStyle = 'blue';
-          ctxSg.beginPath();
-          ctxSg.moveTo(0,h/2-u[0]*h/(2*MASg));
-          for (let i=1;i<N;i++) {
-            ctxSg.lineTo(w*i/(N-1),h/2-u[i]*h/(2*MASg));
-          }
-          ctxSg.stroke();
-          ctxSg.strokeStyle = 'red';
-          ctxSg.beginPath();
-          ctxSg.moveTo(0,h/2-ua[0]*h/(2*MASg));
-          for (let i=1;i<N;i++) {
-            ctxSg.lineTo(w*i/(N-1),h/2-ua[i]*h/(2*MASg));
-          }
-          ctxSg.stroke();
-          //calculating spectrogram
-          for (let i=mMin;i<=mMax;i++) {
-            let URe=0;
-            let UIm=0;
-            let omega=pi2*i*T/N;
-            for (j=0;j<N;j++) {
-              phi=omega*j;
-              URe+=u[j]*Math.cos(phi);
-              UIm+=u[j]*Math.sin(phi);
+        //And now - once more for the precise solution
+        function pbtnprs () {
+        //generating F
+            const N=document.getElementById('pinpN').value; //N
+            const Ymax=document.getElementById('pinpYmax').value; //Ymax
+            const M=2*N+1;
+            var Fs=new Array(M);
+            var Fr=new Array(M);
+            var i,j;
+            for (i=0;i<M;i++) {
+                Fs[i]=g(i/(M-1));
+                Fr[i]=0;
             }
-            Inu[i]=(URe*URe+UIm*UIm)/N;
-          }
-          //drawing spectrogram
-          ctxSp.strokeStyle = 'blue';
-          ctxSp.beginPath();
-          ctxSp.moveTo(0,h-Inu[mMin]*h/MASp);
-          for (let i=mMin;i<=mMax;i++) {
-            ctxSp.lineTo(w*(i-mMin)/(mMax-mMin),h-Inu[i]*h/MASp);
-          }
-          ctxSp.stroke();
+            for (i=1;i<M;i+=2) {
+                Fr[i]=2*(Fs[i-1]+8*Fs[i]+Fs[i+1]);
+            }
+            for (i=2;i<M-1;i+=2) {
+                Fr[i]=-Fs[i-2]+2*Fs[i-1]+8*Fs[i]+2*Fs[i+1]-Fs[i+2];
+            }
+            for (i=0;i<M;i++) {
+                Fr[i]/=10*N*N;
+            }
+            Fr[0]=0;
+            Fr[M-1]=0;
+            /* debug output
+            console.log (Fs);
+            console.log (Fr);
+            */
+
+        //generating A
+            var A=new Array(M);
+            for (i=0;i<M;i++) {
+                A[i]=new Array(M+1);
+                for (j=0;j<M;j++) {
+                    A[i][j]=0;
+                }
+                A[i][M]=Fr[i];
+            }
+            for (i=1;i<M;i+=2) {
+                A[i][i-1]=-8;
+                A[i][i]=16;
+                A[i][i+1]=-8;
+            }
+            for (i=2;i<M-1;i+=2) {
+                A[i][i-2]=1;
+                A[i][i-1]=-8;
+                A[i][i]=14;
+                A[i][i+1]=-8;
+                A[i][i+2]=1;
+            }
+            A[0][0]=1;
+            A[M-1][M-1]=1;
+            /* debug output
+            console.log ('Just generated:')
+            for (i=0;i<M;i++) console.log(A[i]);
+            */
+
+        //solving
+            var t;
+            for (i=0;i<M-1;i+=2) {
+                t=A[i][i];
+//              A B C    1 B C
+//              D E F => D E F
+//              G H I    G H I
+                if (t!=1) {
+                    if (t!=0) {
+                        A[i][M]/=t;
+                        A[i][i+2]/=t;
+                        A[i][i+1]/=t;
+                        A[i][i]=1;
+                    } else {
+                        console.log ("Divisin by zero at ", i);
+                    }
+                }
+//              1 B C    1 B C
+//              D E F => 0 E F
+//              G H I    0 H I
+                t=A[i+1][i];
+                A[i+1][M]-=A[i][M]*t;
+                A[i+1][i+2]-=A[i][i+2]*t;
+                A[i+1][i+1]-=A[i][i+1]*t;
+                A[i+1][i]=0;
+                t=A[i+2][i];
+                A[i+2][M]-=A[i][M]*t;
+                A[i+2][i+2]-=A[i][i+2]*t;
+                A[i+2][i+1]-=A[i][i+1]*t;
+                A[i+2][i]=0;
+//              1 B C    1 B C
+//              0 E F => 0 1 F
+//              0 H I    0 H I
+                t=A[i+1][i+1];
+                if (t!=1) {
+                    if (t!=0) {
+                        A[i+1][M]/=t;
+                        A[i+1][i+2]/=t;
+                        A[i+1][i+1]=1;
+                    } else {
+                        console.log ("Divisin by zero at ", i+1);
+                    }
+                }
+//              1 B C    1 B C
+//              0 1 F => 0 1 F
+//              0 H I    0 0 I
+                t=A[i+2][i+1];
+                A[i+2][M]-=A[i+1][M]*t;
+                A[i+2][i+2]-=A[i+1][i+2]*t;
+                A[i+2][i+1]=0;
+            }
+            for (i=M-1;i>0;i-=2) {
+// we're using the fact that the last line is always 0..., 1
+//              1 B C    1 B 0
+//              0 1 F => 0 1 0
+//              0 0 1    0 0 1
+                A[i-1][M]-=A[i][M]*A[i-1][i];
+                A[i-1][i]=0;
+                A[i-2][M]-=A[i][M]*A[i-2][i];
+                A[i-2][i]=0;
+//              1 B C    1 0 0
+//              0 1 F => 0 1 0
+//              0 0 1    0 0 1
+                A[i-2][M]-=A[i-1][M]*A[i-2][i-1];
+                A[i-2][i-1]=0;
+            }
+            /* debug output
+            console.log ('Solved: ', A);
+            for (i=0;i<M;i++) {
+                console.log (i,A[i][M]);
+            }*/
+
+            //drawing
+            const canvas = document.getElementById('pplot');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.fillStyle="white";
+            ctx.beginPath();
+            ctx.rect(0,0,w,h);
+            ctx.fill();
+            ctx.strokeStyle = 'red';
+            ctx.beginPath();
+            ctx.moveTo(0,h);
+            for (let i=1;i<w;i++) {
+                let x=i/w;
+                ctx.lineTo(i,h*(1+(x*x/4-x/4+(Math.cos(2*Math.PI*x)-1)/(8*Math.PI*Math.PI))/Ymax));
+            }
+            ctx.stroke();
+            ctx.strokeStyle = 'blue';
+            ctx.beginPath();
+            ctx.moveTo(0,h);
+            for (let i=1;i<M;i++) {
+                ctx.lineTo(w*i/(M-1),h*(1-A[i][M]/Ymax));
+            }
+            ctx.stroke();
         }
-*/
     </script>
         
   </head>
@@ -254,7 +325,7 @@
                 <img src="Task_II_1_exponential.png"><br>
                 <br>
                 N:<br>
-                <input id="inpN" type="text" value="16"><br>
+                <input id="inpN" type="text" value="32"><br>
                 y<sub>max</sub>:<br>
                 <input id="inpYmax" type="text" value="0.06"><br>
                 
@@ -266,15 +337,23 @@
             </td>
         </tr>
         <!--Spectrogram parameters-->
-<!--        <tr>
+        <tr>
             <td>
                 <img src="Task_II_1_cosine.png"><br>
+                <br>
+                N:<br>
+                <input id="pinpN" type="text" value="4"><br>
+                y<sub>max</sub>:<br>
+                <input id="pinpYmax" type="text" value="0.1"><br>
+                
+                <br>
+                <button id="pinpDraw" onclick="pbtnprs()">Calculate</button>
             </td>
             <td>
-                <canvas id="plotSp" width=1000 height=400></canvas>
+                <canvas id="pplot" width=1000 height=400></canvas>
             </td>
         </tr>
--->
+
     </table>
   </body>
 </html>

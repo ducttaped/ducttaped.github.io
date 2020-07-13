@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Duct-taped site. Chaos game.</title>
+    <script type="text/javascript">
+      var N;
+      var tr=[], trs=[]; //transitions matrix and a vector of summary weights of its rows
+      var canvas
+        
+      function init() {
+        canvas = document.getElementById('canvas');
+        canvas.width=window.innerWidth-25;
+        canvas.height=window.innerHeight-200;
+        console.log(window.innerWidth)
+        console.log(window.innerHeight)
+        recalcNQ();
+      }
+
+      function recalcN() {
+        N=document.getElementById("inpN").value|0;
+        let s="";
+        for (i=0; i<N;i++) {
+          s+='<td align="center"><input id="trinp'+i+'" type="checkbox" checked onchange="draw()"></td>'
+        }
+        document.getElementById('jumps').innerHTML=s;
+        draw();
+      }
+      function recalcQ() {
+        Q=(document.getElementById("inpQ").value|0)/120;
+        draw();
+      }
+      function recalcNQ() {
+        N=document.getElementById("inpN").value|0;
+        let s="";
+        for (i=0; i<N;i++) {
+          s+='<td align="center"><input id="trinp'+i+'" type="checkbox" checked onchange="draw()"></td>'
+        }
+        document.getElementById('jumps').innerHTML=s;
+        Q=(document.getElementById("inpQ").value|0)/120;
+        draw();
+      }
+      
+      function tr_weights() {
+        console.log(N)
+        for (let i=0;i<N;i++) {
+            tr[i]=[];
+            trs[i]=0;
+            for (let j=0;j<N;j++) {
+                let M=(i-j+N)%N
+                if (document.getElementById("trinp"+M).checked) {
+                    tr[i][j]=1;
+                    trs[i]++;
+                } else {
+                    tr[i][j]=0;
+                }
+            }
+            console.log(tr[i])
+        }
+      }
+      function draw() {
+        if (canvas.getContext) {
+          const ctx = canvas.getContext('2d');
+          const w=canvas.width;
+          const h=canvas.height;
+          const wh=w*h;
+          const r=w<h?w*0.45:h*0.45;
+          const imageData = ctx.createImageData(w, h);
+          const {PI, cos, sin, floor, random, round} = Math;
+          var vx=[], vy=[];
+          var cmax, c=[];
+          var mx,my,x,y,dx,dy;
+          var i,j,k,l,dj;
+          tr_weights();
+          for (i=0; i<N; i++) {
+              vx[i]=w/2+r*sin(2*i*PI/N);
+              vy[i]=h/2-r*cos(2*i*PI/N);
+          }
+          
+          for (i=0; i<wh;i++) {
+              c[i]=0;
+          }
+          x=w*random();
+          y=h*random();
+          j=floor(N*random());
+          for (let i=0;i<2000000;i++) {
+              dj=floor(trs[j]*random());
+              for (k=l=0;l<=dj;k++) {
+                l+=tr[j][k];
+              }
+              j=k-1;
+              x+=(vx[j]-x)*Q;
+              y+=(vy[j]-y)*Q;
+              xm=floor(x);
+              ym=floor(y);
+              dx=x-xm;
+              dy=y-ym;
+              dxy=dx*dy;
+              k=ym*w+xm;
+              c[k]+=(1-dx)*(1-dy);
+              c[k+1]+=dx-dxy;
+              c[k+w]+=(1-dx)*dy;
+              c[k+w+1]+=dx*dy;
+         }
+          cmax=0;
+          for (i=0; i<wh;i++) {
+              if (c[i]>cmax) cmax=c[i]
+          }
+          console.log(wh,cmax);
+          // Iterate through every pixel
+          for (i=j=0; j < imageData.data.length; j+=4, i++) {
+            // Modify pixel data
+            xm=i%w;
+            ym=(i-x)/w;
+            imageData.data[j] = 0;  // R
+            imageData.data[j + 1] = round(255*c[i]/cmax) // G
+            imageData.data[j + 2] = 0;  // B
+            imageData.data[j + 3] = 255;  // A
+          }
+          // Draw image data to the canvas
+          ctx.putImageData(imageData, 0, 0);
+        }
+      }
+    </script>
+    <style type="text/css">
+      canvas { 
+        border: 1px solid black;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      /* The slider itself */
+      .slider {
+        -webkit-appearance: none;  /* Override default CSS styles */
+        appearance: none;
+        width: 100%; /* Full-width */
+        height: 25px; /* Specified height */
+        background: #d3d3d3; /* Grey background */
+        outline: none; /* Remove outline */
+        opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+        -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+        transition: opacity .2s;
+      }
+
+      /* Mouse-over effects */
+      .slider:hover {
+        opacity: 1; /* Fully shown on mouse-over */
+      }
+
+      /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none; /* Override default look */
+        appearance: none;
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        background: #4CAF50; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+      }
+
+      .slider::-moz-range-thumb {
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        background: #4CAF50; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+      }
+    </style>
+  </head>
+  <body onload="init()">
+    <canvas id="canvas" ></canvas><br>
+    <input type="range" min="3" max="20" value="5" class="slider" id="inpN" oninput="recalcN()"><br>
+    <table width=100%>
+      <tr id="jumps">
+      <tr>
+    </table>
+    <input type="range" min="20" max="100" value="60" class="slider" id="inpQ" oninput="recalcQ()"><br>
+  </body>
+</html>

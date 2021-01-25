@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8"/>
-    <title>Duct-taped site. Dancing grid.</title>
+    <title>Duct-taped site. Dancing carpet.</title>
     <script type="text/javascript">
       const n=5;
       const m=3**n;
@@ -31,10 +31,10 @@
         const t=Date.now();
         const phi=t/1000;
         const {cos, sin, round} = Math;
-        const xlo=(3+cos(phi))/9;
-        const xhi=xlo+1/3;
-        const ylo=(3+sin(phi))/9;
-        const yhi=ylo+1/3;
+        const xlo=(3+cos(phi*3/5))/9;
+        const xhi=(6+cos(phi*3/7))/9;
+        const ylo=(3+cos(phi*3/11))/9;
+        const yhi=(6+cos(phi*3/13))/9;
         var gx=[],gy=[];
         ctx.fillStyle = 'black';
         ctx.beginPath();

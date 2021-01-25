@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Duct-taped site. Dancing grid.</title>
+    <script type="text/javascript">
+      const n=5;
+      const m=3**n;
+      //initiation
+      function init() {
+        //global definitions
+        const {min, random} = Math;
+        canvas = document.getElementById('tutorial');
+        if (canvas.getContext) {
+          ctx = canvas.getContext('2d');
+          ctx.strokeStyle = 'white';
+          ctx.fillStyle = 'black';
+          initGraph();
+          fps=[];
+          window.requestAnimationFrame(draw);
+        }
+      }
+      function initGraph(){
+          canvas.width=window.innerWidth-50;
+          canvas.height=window.innerHeight-50;
+          w=canvas.width;
+          h=canvas.height;
+      }
+      //drawing each frame
+      function draw() {
+        const t=Date.now();
+        const phi=t/1000;
+        const {cos, sin, round} = Math;
+        const xlo=(2+cos(phi))/6;
+        const xhi=xlo+1/3;
+        const ylo=(2+sin(phi))/6;
+        const yhi=ylo+1/3;
+        var gx=[],gy=[];
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.rect(0,0,w,h);
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        //calculating grid
+        gx[0]=w>h?50+(w-h)/2:50;
+        gx[m]=w>h?w-50-(w-h)/2:(w-50);
+        gy[0]=h>w?50+(h-w)/2:50;
+        gy[m]=h>w?h-50-(h-w)/2:(h-50);
+        for (let s=m/3;s>=1;s/=3) {
+            for (let i = 0;i<m;i+=3*s) {
+                gx[i+s]=gx[i]+(gx[i+3*s]-gx[i])*xlo;
+                gx[i+2*s]=gx[i]+(gx[i+3*s]-gx[i])*xhi;
+                gy[i+s]=gy[i]+(gy[i+3*s]-gy[i])*ylo;
+                gy[i+2*s]=gy[i]+(gy[i+3*s]-gy[i])*yhi;
+            }
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgb(${round(128+127*cos(phi))},${round(128+127*cos(phi+2*Math.PI/3))},${round(128+127*cos(phi-2*Math.PI/3))})`;
+        for (let s=1;s<m;s*=3){
+            for (let i=0;i<m;i+=3*s){
+                for (let j=0;j<m;j+=3*s){
+                    ctx.rect(gx[i+s],gy[j+s],gx[i+2*s]-gx[i+s],gy[j+2*s]-gy[j+s]);
+                }
+            }
+        }
+        ctx.fill();
+        //Draw fps counter
+        fps.push(t);
+        ctx.font = '24px monospace';
+        ctx.fillStyle = 'white';
+        if (fps.length==50) ctx.fillText((50000/(t-fps.shift())).toFixed(1),40,40);
+        window.requestAnimationFrame(draw);
+      }
+    </script>
+    <style type="text/css">
+        canvas { border: 1px solid black; }
+    </style>
+  </head>
+  <body onload="init();" onresize="initGraph();">
+    <canvas id="tutorial"></canvas>
+  </body>
+</html>
